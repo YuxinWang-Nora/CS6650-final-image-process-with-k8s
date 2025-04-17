@@ -24,6 +24,7 @@ There is a critical need for a **high-throughput, fault-tolerant distributed sys
 We propose building a **Kubernetes-Powered Image Processing Platform** that leverages containerization and orchestration to achieve elastic scalability.
 
 ### Architecture:
+![Architecture Diagram](./Proposal/architecture.png)
 
 - **REST API** for image upload and processing requests
 - **Java-based microservice** to handle image processing (simple resizing functionality)
