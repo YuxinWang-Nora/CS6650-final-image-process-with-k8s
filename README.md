@@ -2,54 +2,96 @@
 
 ## Group Members
 
-- **Member 1:** [Name] - [Email]
-- **Member 2:** [Name] - [Email]
-- **Member 3:** [Name] - [Email]
+- **Lan Wang** 
+- **Jingwen Huang**
+- **Yuxin Wang**
 
-## Project Proposal: Scalable Image Processing Service using Kubernetes
+## Project Proposal: Scalable Image Processing System with Kubernetes
+
 ## 1. Problem Statement
-In real-world applications like social media platforms, e-commerce websites, or digital media companies, massive numbers of images must be processed (e.g., resized, watermarked, or converted) before storage or display. Processing images sequentially on a single server can quickly become a performance bottleneck, especially under heavy load.
-There is a need for a **scalable and fault-tolerant distributed system** that can process images efficiently under varying workloads.
+
+Modern applications across industries (social media, e-commerce, content management systems) require processing thousands of images in real-time for various purposes such as resizing, format conversion, and applying visual effects. Traditional sequential processing approaches create significant bottlenecks under heavy load, leading to:
+
+- Increased response times and degraded user experience
+- Inefficient resource utilization
+- Difficulty handling sudden traffic spikes
+- Single points of failure
+
+There is a critical need for a **high-throughput, fault-tolerant distributed system** that can efficiently process images at scale while adapting to variable workloads.
 
 ## 2. Proposed Solution
-We propose to build a **Scalable Image Processing Service** deployed on **Kubernetes (Minikube)**.
+
+We propose building a **Kubernetes-Powered Image Processing Platform** that leverages containerization and orchestration to achieve elastic scalability.
 
 ### Architecture:
-- A **Java-based microservice** will accept image processing tasks (for example, resize images).
-- Kubernetes (Minikube) will run **multiple replicas** (pods) of the image processing service.
-- Kubernetes **Horizontal Pod Autoscaler** will automatically adjust the number of pods based on CPU usage.
-- A S3 bucket in local stack will be used to store the processed images.
-- Client will upload images to do the load testing.
+
+- **REST API** for image upload and processing requests
+- **Java-based microservice** to handle image processing (simple resizing functionality)
+- **Kubernetes (Minikube)**  to run multiple replicas (pods) of the service
+- **Horizontal Pod Autoscaler (HPA)** to adjust pod count based on CPU usage
+- **LocalStack S3** for storing processed images
 
 ### Workflow:
-1. client uploads images.
-2. Worker pods (Java microservices) consume tasks and process images.
-3. Processed images are stored in local stack S3 bucket.
 
-**Technology Stack:**
-- **Backend:** Java (Spring Boot or simple Java HTTP server)
-- **Containerization:** Docker
-- **Orchestration:** Kubernetes (Minikube)
-- **Autoscaling:** Kubernetes Horizontal Pod Autoscaler
+1. Client uploads images through REST API endpoints
+2. Worker pods process images (resize to standard dimensions)
+3. Processed images are stored in LocalStack S3 bucket
+4. REST API returns response with processed image URLs or status
 
-**Bonus Enhancements (optional depending on time):**
-- Implement different processing modes (resize, rotate, watermark, filter).
-- Provide a simple API endpoint for uploading tasks instead of CLI client.
-- Python or Node.js client for uploading images。
-- Deploy to AWS Kubernetes Service (EKS) or Google Kubernetes Engine (GKE) for production. (if time permits)
+### Technology Stack:
 
-## 3. Proposed Evaluation
-We will evaluate the system’s performance and scalability under different workloads by:
-- **Comparison of performance with and without kubernetes:**  
-  Measure the performance of the image processing service with and without Kubernetes to demonstrate the benefits of using Kubernetes for scaling.
-- **Comparison of performance with different kubernetes configurations:**  
-  Measure the performance of the image processing service with different Kubernetes configurations (different number of replicas, different resource limits, autoscaling) to demonstrate the impact of these configurations on performance.
-- The measurement will be done using the following metrics:
-  - **Throughput Measurement:**  
-    Measure the number of images processed per minute as load increases.
-  - **Latency Measurement:**  
-    Measure the average time taken from task submission to image processing completion.
-  - **Fault Tolerance Check:**  
-    Kill random worker pods during processing and observe that Kubernetes reschedules and continues processing without system failure.
-  - **Scalability Test(optional depending on time):**  
-    Use load testing tools (e.g., a custom script or `hey` load generator) to simulate a sudden spike in incoming tasks and observe how the system automatically scales up pods.
+- **Backend**: Java with Spring Boot (REST controllers)
+- **Containerization**: Docker
+- **Orchestration**: Kubernetes (Minikube)
+- **Storage**: LocalStack S3
+- **Testing**: JMeter for load testing
+
+### Advanced Features (Priority-Based Implementation):
+
+1. **Multiple Processing Operations**:
+  - Image resizing with aspect ratio preservation
+  - Format conversion (JPEG, PNG, WebP)
+  - Basic filters and watermarking
+
+2. **Observability and Monitoring**:
+  - Prometheus and Grafana integration
+  - Custom metrics for throughput and latency
+
+3. **Extended Deployment Options** (time permitting):
+  - Deployment to AWS EKS or GKE for cloud-scale testing
+  - CI/CD pipeline for automated deployment
+
+## 3. Evaluation Methodology
+
+We will evaluate our system's performance through practical tests:
+
+### Core Evaluation:
+
+- **Baseline vs. Kubernetes Comparison:**  
+  Compare performance of single-instance vs. Kubernetes-orchestrated deployment
+
+- **Throughput Measurement:**  
+  Count of images processed per minute under increasing load
+
+- **Latency Measurement:**  
+  Average time from submission to completion
+
+- **Fault Tolerance:**  
+  Test system recovery when worker pods are deliberately terminated
+
+### Optional Evaluation:
+
+- **Comparison of different Kubernetes configurations:**  
+  Test performance with different settings:
+  - Varying number of replicas
+  - Different resource limits
+  - With and without autoscaling
+
+- **Scalability Test:**  
+  Observe how system handles sudden spikes in incoming tasks
+
+### Testing Approach:
+
+1. Use JMeter to simulate varying client loads
+2. Measure key metrics at different concurrency levels
+3. Document findings in graphical format
