@@ -9,6 +9,13 @@ spec:
         - name: init-s3
           image: amazon/aws-cli
           command: ["/bin/bash", "/scripts/init.sh"]
+          env:
+            - name: AWS_ACCESS_KEY_ID
+              value: "test"
+            - name: AWS_SECRET_ACCESS_KEY
+              value: "test"
+            - name: AWS_DEFAULT_REGION
+              value: "us-east-1"
           volumeMounts:
             - name: init-script
               mountPath: /scripts
