@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: init-s3-bucket
+spec:
+  template:
+    spec:
+      containers:
+        - name: init-s3
+          image: amazon/aws-cli
+          command: ["/bin/bash", "/scripts/init.sh"]
+          volumeMounts:
+            - name: init-script
+              mountPath: /scripts
+      volumes:
+        - name: init-script
+          configMap:
+            name: localstack-init
+            defaultMode: 0777
+      restartPolicy: Never
+  backoffLimit: 4
