@@ -6,15 +6,21 @@ import org.imgscalr.Scalr;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import software.amazon.awssdk.core.ResponseBytes;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.model.S3Exception;
 
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
@@ -39,7 +45,7 @@ public class ImageService {
    * @param file The image file to process
    * @return URL of the processed image
    */
-  public String processImage(MultipartFile file) throws IOException {
+  public Map<String, String>  processImage(MultipartFile file) throws IOException {
     log.info("Processing image: {}", file.getOriginalFilename());
 
     // Read the image
@@ -68,8 +74,41 @@ public class ImageService {
 
     log.info("Image processed and uploaded to S3: {}", key);
 
-    // Return the URL (would be different in production vs LocalStack)
-    return String.format("http://localhost:4566/%s/%s", bucketName, key);
+//    // Return the URL (would be different in production vs LocalStack)
+//    return String.format("http://localhost:4566/%s/%s", bucketName, key);
+    // Return both the URL and the key
+    Map<String, String> result = new HashMap<>();
+    result.put("url", String.format("http://localhost:4566/%s/%s", bucketName, key));
+    result.put("key", key);
+
+    return result;
+  }
+
+  /**
+   * Retrieve an image from S3 by its key
+   *
+   * @param key The image key in S3
+   * @return The image bytes
+   */
+  public byte[] getImage(String key) throws IOException {
+    log.info("Retrieving image with key: {}", key);
+
+    try {
+      // Create a request to get the object
+      GetObjectRequest getObjectRequest = GetObjectRequest.builder()
+          .bucket(bucketName)
+          .key(key)
+          .build();
+
+      // Get the object from S3
+      ResponseBytes<GetObjectResponse> objectBytes = s3Client.getObjectAsBytes(getObjectRequest);
+
+      // Return the bytes
+      return objectBytes.asByteArray();
+    } catch (S3Exception e) {
+      log.error("Error retrieving image from S3: {}", e.getMessage(), e);
+      throw new IOException("Error retrieving image: " + e.getMessage(), e);
+    }
   }
 
   /**

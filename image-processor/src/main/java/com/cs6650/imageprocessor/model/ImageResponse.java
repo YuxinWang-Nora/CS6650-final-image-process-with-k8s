@@ -17,4 +17,5 @@ public class ImageResponse {
   private String imageUrl;
   private String originalName;
   private LocalDateTime timestamp;
+  private String imageKey;
 }
