@@ -23,6 +23,13 @@ RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 # Stage 2: Create the final image
 FROM openjdk:11-jre-slim
 
+# Install font libraries needed for watermarking
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    fontconfig \
+    libfreetype6 \
+    && rm -rf /var/lib/apt/lists/*
+
 ARG DEPENDENCY=/app/target/dependency
 
 # Copy the dependency application file structure
