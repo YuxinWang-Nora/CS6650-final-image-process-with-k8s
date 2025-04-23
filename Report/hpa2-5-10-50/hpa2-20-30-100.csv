@@ -1,0 +1,6 @@
+Label,# Samples,Average,Median,90% Line,95% Line,99% Line,Min,Max,Error %,Throughput,Received KB/sec,Sent KB/sec
+Get /images/,2000,518,528,954,1068,1373,2,1782,0.000%,20.93189,116.96,3.64
+Post /images/upload/watermark,2000,1121,1048,1837,2162,2784,22,8206,0.000%,12.64486,5.67,36.67
+Post /images/upload/filter,2000,1130,1074,1843,2111,2829,22,3784,0.000%,12.67548,5.68,36.75
+Post /images/upload/resize,2000,1116,1045,1823,2134,2822,30,3785,0.000%,12.71052,5.70,36.86
+TOTAL,8000,972,928,1701,2009,2693,2,8206,0.000%,50.57945,87.66,112.19
