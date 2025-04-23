@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  # LocalStack for simulating AWS S3
+  localstack:
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - DEBUG=1
+      - DATA_DIR=/var/lib/localstack/data
+    volumes:
+      - ./localstack-init:/docker-entrypoint-initaws.d
+      - localstack-vol:/var/lib/localstack
+      - /var/run/docker.sock:/var/run/docker.sock  # Add this line to mount Docker socket
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # Spring Boot image processor application
+  image-processor:
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - AWS_S3_ENDPOINT=http://localstack:4566
+      - AWS_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_KEY=test
+      - AWS_S3_BUCKET=images-bucket
+    depends_on:
+      localstack:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/images/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  localstack-vol:

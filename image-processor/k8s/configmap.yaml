@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: localstack-init
+data:
+  init.sh: |
+    #!/bin/bash
+    # Wait for LocalStack to be ready
+    echo "Waiting for LocalStack to be ready..."
+    sleep 10
+    
+    # Use the service name instead of localhost
+    echo "Creating S3 bucket for image storage..."
+    aws --endpoint-url=http://localstack:4566 s3 mb s3://images-bucket
+    
+    echo "Setting bucket policy to public-read for ease of testing..."
+    aws --endpoint-url=http://localstack:4566 s3api put-bucket-policy \
+      --bucket images-bucket \
+      --policy '{
+        "Version": "2012-10-17",
+        "Statement": [
+          {
+            "Sid": "PublicReadGetObject",
+            "Effect": "Allow",
+            "Principal": "*",
+            "Action": "s3:GetObject",
+            "Resource": "arn:aws:s3:::images-bucket/*"
+          }
+        ]
+      }'
+    
+    echo "S3 bucket setup complete!"

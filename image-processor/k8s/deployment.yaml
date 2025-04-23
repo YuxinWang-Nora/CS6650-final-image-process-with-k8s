@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: image-processor
+  labels:
+    app: image-processor
+spec:
+  replicas: 1  # Start with 2 replicas
+  selector:
+    matchLabels:
+      app: image-processor
+  template:
+    metadata:
+      labels:
+        app: image-processor
+    spec:
+      containers:
+        - name: image-processor
+          image: image-processor:latest
+          imagePullPolicy: Never  # Use local image
+          ports:
+            - containerPort: 8080
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "1000m"
+              memory: "1Gi"
+          env:
+            - name: AWS_S3_ENDPOINT
+              value: "http://localstack:4566"
+            - name: AWS_REGION
+              value: "us-east-1"
+            - name: AWS_ACCESS_KEY_ID
+              value: "test"
+            - name: AWS_SECRET_KEY
+              value: "test"
+            - name: AWS_S3_BUCKET
+              value: "images-bucket"
+          readinessProbe:
+            httpGet:
+              path: /api/images/health
+              port: 8080
+            initialDelaySeconds: 15
+            periodSeconds: 5
