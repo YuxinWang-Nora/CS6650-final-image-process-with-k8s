@@ -1,20 +1,26 @@
-# Image Processing Service
+# Scalable Image Processing System with Kubernetes
 
-This is a scalable image processing service built with Spring Boot and designed to run on Kubernetes.
+This is a high-throughput, fault-tolerant distributed system for processing images at scale, built with Spring Boot and deployed on Kubernetes.
 
 ## Features
 
-- Image upload via REST API
-- Image resizing with aspect ratio preservation
-- Storage in S3 (LocalStack for development)
-- Containerized with Docker
-- Ready for Kubernetes deployment
+- **Multiple Image Processing Operations**:
+   - Image resizing with aspect ratio preservation
+   - Watermarking with customizable text and position
+   - Filters (grayscale, sepia, blur, sharpen)
+- **Scalable Architecture**:
+   - REST API endpoints for different processing operations
+   - Kubernetes orchestration with autoscaling
+   - Containerized with Docker for portability
+- **S3-Compatible Storage** (LocalStack for development)
+- **Fault Tolerance and High Availability**
 
 ## Prerequisites
 
 - Java 11+
 - Docker & Docker Compose
-- Maven
+- Kubernetes (Minikube for local development)
+- JMeter (for load testing)
 
 ## Local Development
 
@@ -49,51 +55,154 @@ This is a scalable image processing service built with Spring Boot and designed 
    ./mvnw spring-boot:run
    ```
 
-## API Usage
+## Kubernetes Deployment
 
-### Upload and Process an Image
+1. Build and tag the Docker image:
+   ```bash
+   docker build -t image-processor:latest .
+   ```
 
+2. Load the image into Minikube:
+   ```bash
+   minikube image load image-processor:latest
+   ```
+
+3. Deploy to Kubernetes:
+   ```bash
+   kubectl apply -f k8s/configmap.yaml
+   kubectl apply -f k8s/localstack.yaml
+   kubectl apply -f k8s/deployment.yaml
+   kubectl apply -f k8s/service.yaml
+   kubectl apply -f k8s/job.yaml
+   kubectl apply -f k8s/hpa.yaml
+   ```
+
+4. Get the service URL:
+   ```bash
+   minikube service image-processor --url
+   ```
+
+## API Endpoints
+
+### Health Check
 ```
-POST /api/images/upload
+GET /api/images/health
 ```
 
-Example using curl:
+### Process Images
+
+#### Resize Image
+```
+POST /api/images/upload/resize
+```
+
+Example:
 ```bash
-curl -X POST -F "file=@/path/to/your/image.jpg" http://localhost:8080/api/images/upload
+curl -X POST -F "file=@/path/to/your/image.jpg" http://localhost:8080/api/images/upload/resize
 ```
 
-Response:
+#### Add Watermark
+```
+POST /api/images/upload/watermark
+```
+
+Parameters:
+- `file`: Image file (required)
+- `text`: Watermark text (optional, default: "© CS6650")
+- `position`: Watermark position (optional, default: "bottom-right")
+   - Options: "top-left", "top-right", "bottom-left", "bottom-right", "center"
+
+Example:
+```bash
+curl -X POST -F "file=@/path/to/your/image.jpg" -F "text=Copyright 2025" -F "position=center" http://localhost:8080/api/images/upload/watermark
+```
+
+#### Apply Filter
+```
+POST /api/images/upload/filter
+```
+
+Parameters:
+- `file`: Image file (required)
+- `filter`: Type of filter (optional, default: "grayscale")
+   - Options: "grayscale", "sepia", "blur", "sharpen"
+
+Example:
+```bash
+curl -X POST -F "file=@/path/to/your/image.jpg" -F "filter=sepia" http://localhost:8080/api/images/upload/filter
+```
+
+### Retrieve Processed Image
+```
+GET /api/images/{imageKey}
+```
+
+Example:
+```bash
+curl -X GET http://localhost:8080/api/images/123e4567-e89b-12d3-a456-426614174000-image.jpg
+```
+
+## Response Format
+
 ```json
 {
   "success": true,
   "message": "Image processed successfully",
   "imageUrl": "http://localhost:4566/images-bucket/123e4567-e89b-12d3-a456-426614174000-image.jpg",
+  "imageKey": "123e4567-e89b-12d3-a456-426614174000-image.jpg",
   "originalName": "image.jpg",
-  "timestamp": "2023-07-22T15:30:45.123"
+  "timestamp": "2025-04-23T15:30:45.123"
 }
 ```
 
-### Health Check
+## Performance Testing
 
-```
-GET /api/images/health
-```
+The system can be load tested using JMeter to evaluate:
 
-## Docker Build
+1. **Throughput**: Requests per second under varying loads
+2. **Latency**: Response time distribution
+3. **Scalability**: Performance with different numbers of replicas
+4. **Fault Tolerance**: System behavior when pods are terminated
 
-To build the Docker image separately:
+## Monitoring and Troubleshooting
 
+Check pod status:
 ```bash
-docker build -t image-processor:latest .
+kubectl get pods
 ```
 
-## Preparing for Kubernetes
+View logs:
+```bash
+kubectl logs deployment/image-processor
+```
 
-The application is designed to be deployed to Kubernetes. See the Kubernetes deployment files in the `k8s/` directory (to be created in the next phase).
+Check S3 storage:
+```bash
+kubectl exec -it $(kubectl get pod -l app=localstack -o name | cut -d/ -f2) -- \
+  sh -c "AWS_ACCESS_KEY_ID=test AWS_SECRET_ACCESS_KEY=test AWS_DEFAULT_REGION=us-east-1 \
+  aws --endpoint-url=http://localhost:4566 s3 ls s3://images-bucket/"
+```
 
-## Next Steps
+Check Kubernetes dashboard:
+```bash
+minikube dashboard --url
+```
 
-- Kubernetes deployment configurations
-- Horizontal Pod Autoscaler setup
-- Prometheus metrics integration
-- Additional image processing operations
+## Project Structure
+
+```
+image-processor/
+├── src/                            # Application source code
+├── k8s/                            # Kubernetes configuration files
+│   ├── configmap.yaml              # LocalStack init script
+│   ├── deployment.yaml             # Main application deployment
+│   ├── hpa.yaml                    # Horizontal Pod Autoscaler
+│   ├── job.yaml                    # S3 bucket initialization job
+│   ├── localstack.yaml             # LocalStack deployment & service
+│   └── service.yaml                # Application service
+├── localstack-init/                # LocalStack initialization scripts
+├── Dockerfile                      # Application container definition
+├── docker-compose.yml              # Local development setup
+├── pom.xml                         # Maven dependencies
+└── README.md                       # This file
+```
